@@ -1,0 +1,25 @@
+# ======================
+# Directories
+# ======================
+
+# only finalized code will be tracked
+Data/
+Scratch/
+doc/
+Working/
+Results/
+
+
+# ====================
+# File types
+# ===================
+
+
+# ignore compressed files, bam, fastq
+
+*.gz
+*.bam
+*.fastq
+
+
+
