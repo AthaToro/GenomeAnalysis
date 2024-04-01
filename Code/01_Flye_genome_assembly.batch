@@ -1,0 +1,36 @@
+#!/bin/bash -l
+
+#SBATCH -A uppmax2024-2-7
+#SBATCH -M snowy
+#SBATCH -p core
+#SBATCH -n 5
+#SBATCH -t 4:00:00 -
+#SBATCH -J 02_Flye_gen_assembly
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user athanasios.toros.0729@student.uu.se
+#SBATCH --output=%x.%j.out
+
+# dir locations
+export RAW_DATA=/crex/proj/uppmax2024-2-7/Genome_Analysis/1_Zhang_2017
+export WORK_DIR=$HOME/private/GenomeAnalysis/Working/02_Genome_Assembly
+
+#copy raw data into a fresh directory, and unzip
+mkdir -v $WORK_DIR/tmp_pacbio_fastq
+cp $RAW_DATA/genomics_data/PacBio/*.fastq.gz $WORK_DIR/tmp_pacbio_fastq/
+
+for file in $WORK_DIR/tmp_pacbio_fastq/*.gz; do
+    gunzip "$file"
+done
+
+echo "Raw PacBio data successfully extracted"
+ 
+# modules to use
+module load bioinfo-tools 
+module load Flye/2.9.1
+
+# output dir
+mkdir -v $WORK_DIR/Flye_out
+
+flye --genome-size 2.9m --threads 5 -o $WORK_DIR/Flye_out --pacbio-raw $WORK_DIR/tmp_pacbio_fastq/*.fastq
+
+echo "Successful assembly"
