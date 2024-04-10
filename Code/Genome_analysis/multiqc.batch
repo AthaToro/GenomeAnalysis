@@ -1,0 +1,54 @@
+#!/bin/bash -l
+
+#SBATCH -A uppmax2024-2-7
+#SBATCH -M snowy
+#SBATCH -p core
+#SBATCH -n 4
+#SBATCH -t 00:15:00 
+#SBATCH -J 01_Canu_default
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user athanasios.toros.0729@student.uu.se
+#SBATCH --output=%x.%j.out
+
+
+:'
+============
+Description
+============
+
+The following accepts as an argument a directory populated with .fastq files.
+By running this script, a FastQC report is created for each individual file in the directory
+$WORKING_DIR/QC/FastQC. These reports are then used to create a MultiQC report in the form of 
+a .html file in $WORKING_DIR/QC/.
+
+The script can be run both as an sbatch job, as well as in an interactive session.
+'
+
+# Check if an argument is provided
+if [ "$#" -ne 1 ]; then
+    echo "The script requires the path of the directory to be provided.\nUsage: $0 <directory>"
+    exit 1
+fi
+
+# Change to the specified directory
+cd "$1" || exit
+
+mkdir -vp $PWD/QC/FastQC
+
+# Find .fastq and .fq files
+# If another naming scheme is used, modify this
+files=$(find . -maxdepth 1 -name "*.fastq" -o -name "*.fq")
+
+
+# Check if no .fastq or .fq files were found
+if [ -z "$files" ]; then
+    echo "No .fastq or .fq files found."
+    exit 1
+fi
+
+
+fastqc -q -t 4 -o ./QC/FastQC $files
+
+multiqc -o $PWD/QC $PWD/QC/FastQC
+
+echo "\nSuccessful run"
