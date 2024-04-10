@@ -11,18 +11,18 @@
 #SBATCH --output=%x.%j.out
 
 
-:'
-============
-Description
-============
 
-The following accepts as an argument a directory populated with .fastq files.
-By running this script, a FastQC report is created for each individual file in the directory
-$WORKING_DIR/QC/FastQC. These reports are then used to create a MultiQC report in the form of 
-a .html file in $WORKING_DIR/QC/.
+# ============
+# Description
+# ============
 
-The script can be run both as an sbatch job, as well as in an interactive session.
-'
+# The following accepts as an argument a directory populated with .fastq files.
+# By running this script, a FastQC report is created for each individual file in the directory
+# $WORKING_DIR/QC/FastQC. These reports are then used to create a MultiQC report in the form of 
+# a .html file in $WORKING_DIR/QC/.
+
+# The script can be run both as an sbatch job, as well as in an interactive session.
+
 
 # Check if an argument is provided
 if [ "$#" -ne 1 ]; then
@@ -45,6 +45,9 @@ if [ -z "$files" ]; then
     echo "No .fastq or .fq files found."
     exit 1
 fi
+
+# load modules
+
 
 
 fastqc -q -t 4 -o ./QC/FastQC $files
