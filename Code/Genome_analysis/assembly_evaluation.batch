@@ -46,7 +46,7 @@ cd ./Mummer
 
 nucmer --minmatch=100  ~/GenomeAnalysis/Data/Other/E_faecium_reference/E_faecium_reference_chromosome_GCF_009734005.1.fasta   *.fasta 
 
-mummerplot -t png *.delta
+mummerplot -R -Q -t png *.delta
 
 cd ..
 
