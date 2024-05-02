@@ -1,0 +1,119 @@
+#!/bin/bash -l
+
+#SBATCH -A uppmax2024-2-7
+#SBATCH -M snowy
+#SBATCH -p core
+#SBATCH -n 8
+#SBATCH -t 05:00:00 
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user athanasios.toros.0729@student.uu.se
+#SBATCH --output=%x.%j.out
+
+
+export WORK_DIR=$HOME/GenomeAnalysis/Working/05_RNA_Read_Allignment
+echo -e "Working directory: ${WORK_DIR}\n"
+
+module load bioinfo-tools bwa-mem2/2.2.1-20211213-edc703f samtools
+echo -e "Loaded modules: \n"
+module list
+
+# Check if an argument is provided
+if [ "$#" -ne 1 ]; then
+    echo "The script requires the path of the directory to be provided.\nUsage: $0 <directory>"
+    exit 1
+fi
+
+# use SNIC_TMP for fast lookup of files
+mkdir -v $SNIC_TMP/sample_files
+
+# ======================================================================================
+
+echo -e "Copying files to temporary storage: \n"
+# only paired end reads
+#$1 is the provided directory from the script invocation
+for file in "$1"/*paired*.fastq.gz; do
+    cp -v "$file" $SNIC_TMP/sample_files/
+done
+
+echo "Done"
+
+cd $SNIC_TMP
+
+# ======================================================================================
+echo -e "Uncompressing files...\n"
+gunzip -vd ./sample_files/*.gz
+
+echo "Done"
+
+# ======================================================================================
+echo -e "Copying genome assembly...\n"
+
+mkdir -v ./genome_assembly
+cp -v $HOME/GenomeAnalysis/Data/Intermediate/Genome_assemblies/Canu/canu_default_contig_1.fasta ./genome_assembly/
+
+echo -e "Done\n"
+
+# ======================================================================================
+echo -e "Creating index for assembly...\n"
+
+bwa-mem2 index ./genome_assembly/canu_default_contig_1.fasta
+
+echo -e "Done\n"
+
+# ======================================================================================
+
+echo -e "Aligning files to reference genome...\n"
+
+mkdir -v ./alignments
+
+for file in ./sample_files/*pass_1.fastq; do
+
+    # Construct the name of the pass 2 file
+    file_pass_2="${file/_pass_1.fastq/_pass_2.fastq}"
+
+    # Check if the pass 2 file exists
+    if [[ -f "$file_pass_2" ]]; then
+
+        # isolate sample name
+        sample_name=$(basename "$file" | cut -d '_' -f3)
+
+        echo -e "Processing sample ${sample_name}\n"
+
+        # Run your command here, e.g., some_command
+        bwa-mem2 mem -t 8 ./genome_assembly/canu_default_contig_1.fasta "$file" "$file_pass_2" > "./alignments/${sample_name}_allignment.sam"
+
+        echo -e "Quick stats:\n"
+        samtools flagstats "./alignments/${sample_name}_allignment.sam"
+
+    else
+        echo "Matching paired reads file for $file not found."
+    
+    fi
+done
+
+echo -e "Done\n"
+
+# ======================================================================================
+
+echo -e "Sorting, indexing and converting alignments to bam file format...\n"
+
+
+mkdir -v ./sorted_indexed_alignments/
+
+for file in ./alignments/*; do
+
+    echo -e "Processing file ${file}\n"
+    sample_name=$(basename "$file" .sam)
+    
+    samtools sort --threads 6 --write-index $file -o ./sorted_indexed_alignments/${sample_name}_sorted.bam
+
+done
+
+
+echo -e "Done, copying files to working dir"
+
+mkdir -v $WORK_DIR/sorted_bam_alignments
+
+cp -v ./sorted_indexed_alignments/* $WORK_DIR/sorted_bam_alignments/
+
+echo "Successful run"
