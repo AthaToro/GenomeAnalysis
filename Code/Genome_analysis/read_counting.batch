@@ -1,0 +1,69 @@
+#!/bin/bash -l
+
+#SBATCH -A uppmax2024-2-7
+#SBATCH -M snowy
+#SBATCH -p core
+#SBATCH -n 6
+#SBATCH -t 00:30:00 
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user athanasios.toros.0729@student.uu.se
+#SBATCH --output=%x.%j.out
+
+echo -e "Starting script...\n\n"
+
+# assign basic locations
+THREADS=$(nproc)
+echo -e "Using $THREADS threads...\n"
+RESULTS_DIR="/domus/h1/athto/private/GenomeAnalysis/Working/06_RNA_Read_Counts"
+echo -e "Final results will be saved to $RESULTS_DIR\n\n"
+
+# modules 
+module load bioinfo-tools subread/2.0.3
+module list
+
+# The script requires two arguments, the directory with the read samples, 
+# and the file path to the genome assembly annotation
+sample_dir="$1"
+annotation_file="$2"
+
+# Check if both arguments are provided
+if [ -z "$sample_dir" ] || [ -z "$annotation_file" ]; then
+    echo "Usage: $0 <sample_directory> <annotation_file>"
+    exit 1
+fi
+
+# Check if the files exist
+if [ ! -d "$sample_dir" ]; then
+    echo "Directory not found: $sample_dir"
+    exit 1
+fi
+echo -e "Using sample directory ${sample_dir}\n"
+
+if [ ! -f "$annotation_file" ]; then
+    echo "File not found: $annotation_file"
+    exit 1
+fi
+echo -e "Using annotation file ${annotation_file}\n"
+
+
+echo -e "Copying all files to temporary storage..\n\n"
+# sample mappings should be named as .bam
+rsync -a --progress $sample_dir/*.bam $SNIC_TMP
+cp -v $annotation_file $SNIC_TMP
+
+cd $SNIC_TMP
+mkdir ./results
+
+echo -e "\n\nStarting read counting\n"
+# -p and --countReadPairs set due to paired reads
+featureCounts -T $THREADS -p --countReadPairs \
+  -a $(basename $annotation_file)    \
+  -o ./results/$(basename $sample_dir)_read_counts ./*.bam
+
+
+# copy results
+echo -e "\n\nCopying final results\n"
+rsync -a --progress ./results/* $RESULTS_DIR
+
+
+
