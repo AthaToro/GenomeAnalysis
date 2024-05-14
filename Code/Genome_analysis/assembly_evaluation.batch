@@ -21,7 +21,9 @@
 
 # load modules
 module load bioinfo-tools MUMmer/3.23 quast/5.0.2 
+module list
 
+THREADS=$(nproc)
 
 # Change to the specified directory
 cd "$1" || exit
@@ -33,10 +35,10 @@ cd ./Assembly_evaluation_report
 
 # Run Quast
 
-quast.py  ./*fasta \
+quast.py  $1 \
         -r ~/GenomeAnalysis/Data/Other/E_faecium_reference/GCF_009734005.1_ASM973400v2_genomic.fna \
                -g ~/GenomeAnalysis/Data/Other/E_faecium_reference/genomic.gff  \
--l Canu_default --threads 2 -o ./Quast/
+-l Canu_default --threads $THREADS -o ./Quast/
 
 echo "Finished Quast"
 
@@ -44,7 +46,7 @@ echo "Finished Quast"
 
 cd ./Mummer
 
-nucmer --minmatch=100  ~/GenomeAnalysis/Data/Other/E_faecium_reference/E_faecium_reference_chromosome_GCF_009734005.1.fasta   *.fasta 
+nucmer --minmatch=100  ~/GenomeAnalysis/Data/Other/E_faecium_reference/E_faecium_reference_chromosome_GCF_009734005.1.fasta   $1
 
 mummerplot -R -Q -t png *.delta
 
@@ -57,7 +59,7 @@ echo "Finished Mummer"
 cd ./blast
 
 # megablast, gapopen and gapextend penalties lowered to get bigger alignments
-blastn -query *.fasta -db ~/private/GenomeAnalysis/Data/Other/E_faecium_reference/blast/E_faecium_blastdb \ 
+blastn -query $1 -db ~/private/GenomeAnalysis/Data/Other/E_faecium_reference/blast/E_faecium_blastdb \ 
 -evalue 0.01 -gapopen 1 -gapextend 1  -task megablast -outfmt 6 > blast_results.tsv
 
 
