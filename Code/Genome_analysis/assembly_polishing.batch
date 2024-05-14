@@ -103,17 +103,24 @@ for file in ./alignments/*; do
 
 done
 
+
+# ======================================================================================
+
 # CHANGED DIRECTORY
 cd ./sorted_indexed_alignments/
 # bam files for pilon
 BAM_FILES=$(ls ./*sorted.bam | tr '\n' ',' | sed 's/,$//')
 
-# run genome polishing
+
 
 echo -e "Polishing genome $(basename $2) using reads in directory $1...\n"
 
 mkdir -v ../pilon_output
 java -jar $PILON_HOME/pilon.jar --genome ../genome_assembly/*.fasta --frags $BAM_FILES --tracks --changes --vcf --outdir ../pilon_output
 
+
+#copy files back to working dir
+
+rsync -a --progress ../pilon_output $WORK_DIR
 
 echo -e "\nSuccessful run"
