@@ -9,13 +9,13 @@
 #SBATCH --mail-user athanasios.toros.0729@student.uu.se
 #SBATCH --output=%x.%j.out
 
-echo -e "Starting script...\n\n"
+echo -e "Starting script...\n"
 
 # assign basic locations
 THREADS=$(nproc)
 echo -e "Using $THREADS threads...\n"
 RESULTS_DIR="/domus/h1/athto/private/GenomeAnalysis/Working/06_RNA_Read_Counts"
-echo -e "Final results will be saved to $RESULTS_DIR\n\n"
+echo -e "Final results will be saved to $RESULTS_DIR\n"
 
 # modules 
 module load bioinfo-tools subread/2.0.3
@@ -48,6 +48,7 @@ echo -e "Using annotation file ${annotation_file}\n"
 
 echo -e "Copying all files to temporary storage..\n\n"
 # sample mappings should be named as .bam
+# only copies bam files, and not their indexes
 rsync -a --progress $sample_dir/*.bam $SNIC_TMP
 cp -v $annotation_file $SNIC_TMP
 

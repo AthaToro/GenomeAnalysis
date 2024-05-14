@@ -1,0 +1,39 @@
+#!/bin/bash -l
+
+#SBATCH -A uppmax2024-2-7
+#SBATCH -M snowy
+#SBATCH -p core
+#SBATCH -n 8
+#SBATCH -t 02:00:00 
+#SBATCH -J 01_Canu_default
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user athanasios.toros.0729@student.uu.se
+#SBATCH --output=%x.%j.out
+
+# dir locations
+export RAW_DATA=/crex/proj/uppmax2024-2-7/Genome_Analysis/1_Zhang_2017
+export WORK_DIR=$HOME/GenomeAnalysis/Working/02_Genome_Assembly/Canu_nanopore_pacbio
+
+THREADS=$(nproc)
+
+
+# copy relevant files to fast storage
+echo "Copying files to fast storage"
+
+mkdir -v $SNIC_TMP/pacbio
+rsync -a --progress $RAW_DATA/genomics_data/PacBio/*.gz $SNIC_TMP/pacbio
+
+mkdir -v $SNIC_TMP/nanopore
+rsync -a --progress $RAW_DATA/genomics_data/Nanopore/*.gz $SNIC_TMP/nanopore
+
+ 
+# modules to use
+module load bioinfo-tools 
+module load canu/2.2
+module list
+
+echo "Starting assembly..."
+
+canu maxMemory=64 useGrid=false maxThreads=$THREADS  -p canu_pacbio_nanopore -d $WORK_DIR genomeSize=2.9m -nanopore $SNIC_TMP/nanopore/*.gz -pacbio $SNIC_TMP/pacbio/*.fastq.gz   
+
+echo "Successful assembly with Canu"
