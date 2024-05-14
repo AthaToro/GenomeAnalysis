@@ -4,7 +4,7 @@
 #SBATCH -M snowy
 #SBATCH -p core
 #SBATCH -n 8
-#SBATCH -t 02:00:00 
+#SBATCH -t 01:30:00 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user athanasios.toros.0729@student.uu.se
 #SBATCH --output=%x.%j.out
@@ -113,7 +113,7 @@ BAM_FILES=$(ls ./*sorted.bam | tr '\n' ',' | sed 's/,$//')
 echo -e "Polishing genome $(basename $2) using reads in directory $1...\n"
 
 mkdir -v ../pilon_output
-java -jar $PILON_HOME/pilon.jar --genome ../genome_assembly/*.fasta --frags $BAM_FILES --tracks --changes --vcf --outdir ../pilon_output
+java -jar $PILON_HOME/pilon.jar --genome ../genome_assembly/*.fasta --bam $BAM_FILES --tracks --changes --vcf --outdir ../pilon_output
 
 
 #copy files back to working dir
