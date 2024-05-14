@@ -1,0 +1,119 @@
+#!/bin/bash -l
+
+#SBATCH -A uppmax2024-2-7
+#SBATCH -M snowy
+#SBATCH -p core
+#SBATCH -n 8
+#SBATCH -t 05:00:00 
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user athanasios.toros.0729@student.uu.se
+#SBATCH --output=%x.%j.out
+
+# user-defined parameters
+export WORK_DIR=$HOME/GenomeAnalysis/Working/2_1_Assembly_polishing/Illumina
+THREADS=$(nproc)
+
+echo -e "Working directory: ${WORK_DIR}\n"
+echo -e "Genome assembly used: $(basename $2)\n"
+
+module load bioinfo-tools bwa-mem2/2.2.1-20211213-edc703f samtools Pilon/1.24
+module list
+
+# Check if an argument is provided
+if [ "$#" -ne 2 ]; then
+    echo "Error: The script requires both the directory with the reads, and the genome assembly to use.\nUsage: $0 <reads_directory> <genome_assembly>"
+    exit 1
+fi
+
+# use SNIC_TMP for fast lookup of files
+mkdir -v $SNIC_TMP/sample_files
+
+# ======================================================================================
+
+echo -e "Copying files to temporary storage: \n"
+# only paired end reads
+#$1 is the provided directory from the script invocation
+rsync -a --progress $1/*.gz $SNIC_TMP/sample_files
+
+echo "Done"
+
+cd $SNIC_TMP
+
+# ======================================================================================
+echo -e "Uncompressing files...\n"
+gunzip -vd ./sample_files/*.gz
+
+echo "Done"
+
+# ======================================================================================
+echo -e "Copying genome assembly...\n"
+
+
+mkdir -v ./genome_assembly
+cp -v  $2 ./genome_assembly/
+
+echo -e "Done\n"
+
+
+# ======================================================================================
+
+echo -e "Aligning files to reference genome...\n"
+
+mkdir -v ./alignments
+
+for file in ./sample_files/*pass_1.fastq; do
+
+    # Construct the name of the pass 2 file
+    file_pass_2="${file/_pass_1.fastq/_pass_2.fastq}"
+
+    # Check if the pass 2 file exists
+    if [[ -f "$file_pass_2" ]]; then
+
+        # isolate sample name
+        sample_name=$(basename "$file" | cut -d '_' -f3)
+
+        echo -e "Processing sample ${sample_name}\n"
+
+        bwa-mem2 mem -t $THREADS ./genome_assembly/*.fasta "$file" "$file_pass_2" > "./alignments/${sample_name}_allignment.sam"
+
+        echo -e "Quick stats:\n"
+        samtools flagstats "./alignments/${sample_name}_allignment.sam"
+
+    else
+        echo "Matching paired reads file for $file not found."
+    
+    fi
+done
+
+echo -e "Done\n"
+
+# ======================================================================================
+
+echo -e "Sorting, indexing and converting alignments to bam file format...\n"
+
+
+mkdir -v ./sorted_indexed_alignments/
+
+for file in ./alignments/*; do
+
+    echo -e "Processing file ${file}\n"
+    sample_name=$(basename "$file" .sam)
+    
+    samtools sort --threads $THREADS --write-index -o ./sorted_indexed_alignments/${sample_name}_sorted.bam $file 
+
+done
+
+# CHANGED DIRECTORY
+cd ./sorted_indexed_alignments/
+# bam files for pilon
+BAM_FILES=$(ls ./*sorted.bam | tr '\n' ',' | sed 's/,$//')
+
+# run genome polishing
+
+echo -e "Polishing genome $(basename $2) using reads in directory $1...\n"
+
+mkdir -v ../pilon_output
+java -jar $PILON_HOME/pilon.jar --genome ../genome_assembly/*.fasta --frags $BAM_FILES --tracks --changes --vcf --outdir ../pilon_output
+
+
+echo -e "\nSuccessful run"
