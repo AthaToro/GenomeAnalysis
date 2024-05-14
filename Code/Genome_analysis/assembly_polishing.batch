@@ -4,7 +4,7 @@
 #SBATCH -M snowy
 #SBATCH -p core
 #SBATCH -n 8
-#SBATCH -t 05:00:00 
+#SBATCH -t 02:00:00 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user athanasios.toros.0729@student.uu.se
 #SBATCH --output=%x.%j.out
@@ -61,28 +61,18 @@ echo -e "Aligning files to reference genome...\n"
 
 mkdir -v ./alignments
 
-for file in ./sample_files/*pass_1.fastq; do
+for file in ./sample_files/*.fq; do
 
-    # Construct the name of the pass 2 file
-    file_pass_2="${file/_pass_1.fastq/_pass_2.fastq}"
+ 
+    sample_name=$(basename "$file" | cut -d '_' -f2)
 
-    # Check if the pass 2 file exists
-    if [[ -f "$file_pass_2" ]]; then
+    echo -e "Processing sample ${sample_name}\n"
 
-        # isolate sample name
-        sample_name=$(basename "$file" | cut -d '_' -f3)
+    bwa-mem2 mem -t $THREADS ./genome_assembly/*.fasta $file > "./alignments/${sample_name}_allignment.sam"
 
-        echo -e "Processing sample ${sample_name}\n"
+    echo -e "Quick stats:\n"
+    samtools flagstats "./alignments/${sample_name}_allignment.sam"
 
-        bwa-mem2 mem -t $THREADS ./genome_assembly/*.fasta "$file" "$file_pass_2" > "./alignments/${sample_name}_allignment.sam"
-
-        echo -e "Quick stats:\n"
-        samtools flagstats "./alignments/${sample_name}_allignment.sam"
-
-    else
-        echo "Matching paired reads file for $file not found."
-    
-    fi
 done
 
 echo -e "Done\n"
