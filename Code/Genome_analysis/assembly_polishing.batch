@@ -56,6 +56,14 @@ echo -e "Done\n"
 
 
 # ======================================================================================
+echo -e "Creating index for assembly...\n"
+
+bwa-mem2 index ./genome_assembly/*.fasta
+
+echo -e "Done\n"
+
+
+# ======================================================================================
 
 echo -e "Aligning files to reference genome...\n"
 
@@ -67,7 +75,6 @@ for file in ./sample_files/*.fq; do
     sample_name=$(basename "$file" | cut -d '_' -f2)
 
     echo -e "Processing sample ${sample_name}\n"
-
     bwa-mem2 mem -t $THREADS ./genome_assembly/*.fasta $file > "./alignments/${sample_name}_allignment.sam"
 
     echo -e "Quick stats:\n"
