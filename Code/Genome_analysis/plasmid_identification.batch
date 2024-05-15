@@ -33,6 +33,7 @@ mkdir -v $SNIC_TMP/{pacbio,illumina}
 rsync -a --progress "$1"/*.gz $SNIC_TMP/illumina/
 # =======================================================================================
 
+cd $SNIC_TMP
 
 echo -e "Processing Illumina reads...\n"
 gunzip -vd ./illumina/*.gz
