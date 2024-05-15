@@ -3,8 +3,8 @@
 #SBATCH -A uppmax2024-2-7
 #SBATCH -M snowy
 #SBATCH -p core
-#SBATCH -n 8
-#SBATCH -t 01:30:00 
+#SBATCH -n 6
+#SBATCH -t 00:30:00 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user athanasios.toros.0729@student.uu.se
 #SBATCH --output=%x.%j.out
@@ -69,7 +69,7 @@ echo -e "Aligning files to reference genome...\n"
 
 mkdir -v ./alignments
 
-bwa-mem2 mem -t $THREADS ./genome_assembly/*.fasta ./sample_files/*1_clean.fq* -2 ./sample_files/*2_clean.fq* > "./alignments/allignment.sam"
+bwa-mem2 mem -t $THREADS ./genome_assembly/*.fasta ./sample_files/*1_clean.fq* ./sample_files/*2_clean.fq* > "./alignments/allignment.sam"
 
 echo -e "Quick stats:\n"
 samtools flagstats "./alignments/allignment.sam"
