@@ -3,8 +3,8 @@
 #SBATCH -A uppmax2024-2-7
 #SBATCH -M snowy
 #SBATCH -p core
-#SBATCH -n 12
-#SBATCH -t 5:00:00 
+#SBATCH -n 8
+#SBATCH -t 00:30:00 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user athanasios.toros.0729@student.uu.se
 #SBATCH --output=%x.%j.out
