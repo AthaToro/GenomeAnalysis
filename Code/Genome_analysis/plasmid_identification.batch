@@ -1,0 +1,62 @@
+#!/bin/bash -l
+
+#SBATCH -A uppmax2024-2-7
+#SBATCH -M snowy
+#SBATCH -p core
+#SBATCH -n 12
+#SBATCH -t 5:00:00 
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user athanasios.toros.0729@student.uu.se
+#SBATCH --output=%x.%j.out
+
+
+
+
+export WORK_DIR=$HOME/GenomeAnalysis/Working/20_Plasmid_Identification
+THREADS=$(nproc)
+MAX_MEM=$((THREADS * 8))
+
+echo -e "Using working directory: $WORK_DIR"
+
+module load bioinfo-tools spades/3.15.5
+module list
+
+# check for cmd arguments
+if [ "$#" -ne 2 ]; then
+    echo "Error: The script requires both directories with the Illumina and PacBio reads to be provided. Usage: plasmid_identification.batch <Illumina_reads_dir> <PacBio_reads_dir>"
+    exit 1
+fi
+
+# copy all neccessary files to fast storage
+echo -e " Copying files to fast storage...\n"
+mkdir -v $SNIC_TMP/{pacbio,illumina}
+rsync -a --progress "$1"/*.gz $SNIC_TMP/illumina/
+rsync -a --progress "$2"/*.gz $SNIC_TMP/pacbio/
+
+# =======================================================================================
+
+cd "$SNIC_TMP"
+echo -e "Processing PacBio reads...\n"
+gunzip -vd ./pacbio/*.gz
+# technically not neccessary, simplifies command below
+cat ./pacbio/*.fastq > ./pacbio/combined_pacbio.fq
+
+echo -e "Processing Illumina reads...\n"
+gunzip -vd ./illumina/*.gz
+
+# =======================================================================================
+
+echo -e "Starting SPades ...\n"
+mkdir -v ./results
+
+# paired reads for illumina
+spades.py -1 ./illumina/*1_clean.fq -2 ./illumina/*2_clean.fq --pacbio ./pacbio/combined_pacbio.fq -o ./results --plasmid -k 21 --threads $THREADS --memory $MAX_MEM
+
+echo -e "Success!! \n"
+
+# =======================================================================================
+
+echo -e "Copying final files...\n"
+rsync -a --progress ./results "$WORK_DIR"/
+
+echo "Done"
