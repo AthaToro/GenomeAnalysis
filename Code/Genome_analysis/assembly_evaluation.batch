@@ -20,7 +20,7 @@
 
 
 # load modules
-module load bioinfo-tools MUMmer/3.23 quast/5.0.2 
+module load bioinfo-tools MUMmer/3.23 quast/5.0.2 blast/2.15.0+ 
 module list
 
 # user vars
