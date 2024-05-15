@@ -50,7 +50,7 @@ echo -e "Starting SPades ...\n"
 mkdir -v ./results
 
 # paired reads for illumina
-spades.py -1 ./illumina/*1_clean.fq -2 ./illumina/*2_clean.fq --pacbio ./pacbio/combined_pacbio.fq -o ./results -k 20 --threads $THREADS --memory $MAX_MEM
+spades.py -1 ./illumina/*1_clean.fq -2 ./illumina/*2_clean.fq --pacbio ./pacbio/combined_pacbio.fq -o ./results -k 21 --threads $THREADS --memory $MAX_MEM
 
 echo -e "Success!! \n"
 
