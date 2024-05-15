@@ -4,7 +4,7 @@
 #SBATCH -M snowy
 #SBATCH -p core
 #SBATCH -n 8
-#SBATCH -t 00:45:00 
+#SBATCH -t 00:30:00 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user athanasios.toros.0729@student.uu.se
 #SBATCH --output=%x.%j.out
@@ -22,16 +22,17 @@ module load bioinfo-tools spades/3.15.5
 module list
 
 # check for cmd arguments
-if [ "$#" -ne 2 ]; then
-    echo "Error: The script requires both directories with the Illumina and PacBio reads to be provided. Usage: plasmid_identification.batch <Illumina_reads_dir> <PacBio_reads_dir>"
+if [ "$#" -ne 3 ]; then
+    echo "Error: The script requires both directories with the Illumina and PacBio reads to be provided. Usage: spades_assembly.batch <Illumina_reads_dir> <PacBio_reads_dir> <Nanopore_reads_dir>"
     exit 1
 fi
 
 # copy all neccessary files to fast storage
 echo -e " Copying files to fast storage...\n"
-mkdir -v $SNIC_TMP/{pacbio,illumina}
+mkdir -v $SNIC_TMP/{pacbio,illumina,nanopore}
 rsync -a --progress "$1"/*.gz $SNIC_TMP/illumina/
 rsync -a --progress "$2"/*.gz $SNIC_TMP/pacbio/
+rsync -a --progress "$3"/*.gz $SNIC_TMP/nanopore/
 
 # =======================================================================================
 
@@ -44,13 +45,16 @@ cat ./pacbio/*.fastq > ./pacbio/combined_pacbio.fq
 echo -e "Processing Illumina reads...\n"
 gunzip -vd ./illumina/*.gz
 
+echo -e "Processing Nanopore reads...\n"
+gunzip -vd ./nanopore/*.gz
+
 # =======================================================================================
 
 echo -e "Starting SPades ...\n"
 mkdir -v ./results
 
 # paired reads for illumina
-spades.py -1 ./illumina/*1_clean.fq -2 ./illumina/*2_clean.fq --pacbio ./pacbio/combined_pacbio.fq -o ./results -k 21 --threads $THREADS --memory $MAX_MEM
+spades.py -1 ./illumina/*1_clean.fq -2 ./illumina/*2_clean.fq --pacbio ./pacbio/combined_pacbio.fq --nanopore ./nanopore/*.fasta -o ./results -k 21 --isolate --threads $THREADS --memory $MAX_MEM
 
 echo -e "Success!! \n"
 
