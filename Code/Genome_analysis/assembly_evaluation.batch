@@ -61,7 +61,7 @@ cd ..
 
 # Create blast files
 
-cd ./blast
+cd ./act_blast
 
 # megablast, gapopen and gapextend penalties lowered to get bigger alignments
 blastn -query $1 -db ~/private/GenomeAnalysis/Data/Other/E_faecium_reference/blast/E_faecium_blastdb -evalue 0.01 -gapopen 1 -gapextend 1  -task megablast -outfmt 6 > blast_results.tsv
