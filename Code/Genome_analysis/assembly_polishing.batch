@@ -69,18 +69,12 @@ echo -e "Aligning files to reference genome...\n"
 
 mkdir -v ./alignments
 
-for file in ./sample_files/*.fq; do
+bwa-mem2 mem -t $THREADS ./genome_assembly/*.fasta ./sample_files/*1_clean.fq* -2 ./sample_files/*2_clean.fq* > "./alignments/allignment.sam"
 
- 
-    sample_name=$(basename "$file" | cut -d '_' -f2)
+echo -e "Quick stats:\n"
+samtools flagstats "./alignments/allignment.sam"
 
-    echo -e "Processing sample ${sample_name}\n"
-    bwa-mem2 mem -t $THREADS ./genome_assembly/*.fasta $file > "./alignments/${sample_name}_allignment.sam"
 
-    echo -e "Quick stats:\n"
-    samtools flagstats "./alignments/${sample_name}_allignment.sam"
-
-done
 
 echo -e "Done\n"
 
