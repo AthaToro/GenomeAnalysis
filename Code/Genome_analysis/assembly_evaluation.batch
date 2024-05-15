@@ -23,15 +23,20 @@
 module load bioinfo-tools MUMmer/3.23 quast/5.0.2 
 module list
 
+# user vars
 THREADS=$(nproc)
-
-# Change to the specified directory
-cd "$1" || exit
+export WORK_DIR=$HOME/GenomeAnalysis/Working/03_Genome_evaluation/Canu/Canu_polished
 
 
-mkdir -vp ./Assembly_evaluation_report/{Quast,Mummer,act_blast}
+# Check if an argument is provided
+if [ "$#" -ne 1 ]; then
+    echo "Error: The script requires the path to the assembly to be provided. Usage: assembly_evaluation.batch <genome_assembly>"
+    exit 1
+fi
 
-cd ./Assembly_evaluation_report 
+#make directories for each evaluation
+mkdir -vp ./{Quast,Mummer,act_blast}
+
 
 # Run Quast
 
@@ -56,7 +61,7 @@ echo "Finished Mummer"
 
 # Create blast files
 
-cd ./blast
+cd ../blast
 
 # megablast, gapopen and gapextend penalties lowered to get bigger alignments
 blastn -query $1 -db ~/private/GenomeAnalysis/Data/Other/E_faecium_reference/blast/E_faecium_blastdb \ 
