@@ -114,7 +114,7 @@ done
 
 echo -e "Done, copying files to working dir"
 
-mkdir -v $WORK_DIR/sorted_bam_alignments
+mkdir -v $PWD/sorted_bam_alignments
 
 cp -v ./sorted_indexed_alignments/* $PWD/sorted_bam_alignments/
 
