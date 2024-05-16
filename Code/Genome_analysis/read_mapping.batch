@@ -3,7 +3,7 @@
 #SBATCH -A uppmax2024-2-7
 #SBATCH -M snowy
 #SBATCH -p core
-#SBATCH -n 8
+#SBATCH -n 6
 #SBATCH -t 01:00:00 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user athanasios.toros.0729@student.uu.se
@@ -11,15 +11,18 @@
 
 
 export WORK_DIR=$HOME/GenomeAnalysis/Working/05_RNA_Read_Allignment
+THREADS=$(nproc)
+MAX_MEM=$((THREADS * 8))
+
 echo -e "Working directory: ${WORK_DIR}\n"
 
 module load bioinfo-tools bwa-mem2/2.2.1-20211213-edc703f samtools
 echo -e "Loaded modules: \n"
 module list
 
-# Check if an argument is provided
-if [ "$#" -ne 1 ]; then
-    echo "The script requires the path of the directory to be provided.\nUsage: $0 <directory>"
+# Check for arguments
+if [ "$#" -ne 2 ]; then
+    echo "The script requires the genome assembly and the read directory to be provided.\nUsage: read_mapping.batch <read_directory> <genome_assembly>"
     exit 1
 fi
 
@@ -49,14 +52,15 @@ echo "Done"
 echo -e "Copying genome assembly...\n"
 
 mkdir -v ./genome_assembly
-cp -v $HOME/GenomeAnalysis/Data/Intermediate/Genome_assemblies/Canu/canu_default_contig_1.fasta ./genome_assembly/
+#copy genome assembly
+cp -v $2 ./genome_assembly/
 
 echo -e "Done\n"
 
 # ======================================================================================
 echo -e "Creating index for assembly...\n"
 
-bwa-mem2 index ./genome_assembly/canu_default_contig_1.fasta
+bwa-mem2 index $GEN_ASSEMBLY
 
 echo -e "Done\n"
 
@@ -80,7 +84,7 @@ for file in ./sample_files/*pass_1.fastq; do
         echo -e "Processing sample ${sample_name}\n"
 
         # Run your command here, e.g., some_command
-        bwa-mem2 mem -t 8 ./genome_assembly/canu_default_contig_1.fasta "$file" "$file_pass_2" > "./alignments/${sample_name}_allignment.sam"
+        bwa-mem2 mem -t $THREADS $GEN_ASSEMBLY "$file" "$file_pass_2" > "./alignments/${sample_name}_allignment.sam"
 
         echo -e "Quick stats:\n"
         samtools flagstats "./alignments/${sample_name}_allignment.sam"
@@ -105,7 +109,7 @@ for file in ./alignments/*; do
     echo -e "Processing file ${file}\n"
     sample_name=$(basename "$file" .sam)
     
-    samtools sort --threads 6 --write-index $file -o ./sorted_indexed_alignments/${sample_name}_sorted.bam
+    samtools sort --threads $((THREADS -2)) --write-index $file -o ./sorted_indexed_alignments/${sample_name}_sorted.bam
 
 done
 
