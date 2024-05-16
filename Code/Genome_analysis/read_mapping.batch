@@ -9,12 +9,10 @@
 #SBATCH --mail-user athanasios.toros.0729@student.uu.se
 #SBATCH --output=%x.%j.out
 
-
-export WORK_DIR=$HOME/GenomeAnalysis/Working/05_RNA_Read_Allignment
 THREADS=$(nproc)
 MAX_MEM=$((THREADS * 8))
 
-echo -e "Working directory: ${WORK_DIR}\n"
+echo -e "Working directory: ${PWD}\n"
 
 module load bioinfo-tools bwa-mem2/2.2.1-20211213-edc703f samtools
 echo -e "Loaded modules: \n"
@@ -118,6 +116,6 @@ echo -e "Done, copying files to working dir"
 
 mkdir -v $WORK_DIR/sorted_bam_alignments
 
-cp -v ./sorted_indexed_alignments/* $WORK_DIR/sorted_bam_alignments/
+cp -v ./sorted_indexed_alignments/* $PWD/sorted_bam_alignments/
 
 echo "Successful run"
