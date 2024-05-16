@@ -82,7 +82,7 @@ for file in ./sample_files/*pass_1.fastq; do
         echo -e "Processing sample ${sample_name}\n"
 
         # Run your command here, e.g., some_command
-        bwa-mem2 mem -t $THREADS ./genome_assembly.fasta "$file" "$file_pass_2" > "./alignments/${sample_name}_allignment.sam"
+        bwa-mem2 mem -t $THREADS ./genome_assembly/*.fasta "$file" "$file_pass_2" > "./alignments/${sample_name}_allignment.sam"
 
         echo -e "Quick stats:\n"
         samtools flagstats "./alignments/${sample_name}_allignment.sam"
